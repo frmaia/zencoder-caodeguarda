@@ -29,11 +29,11 @@ def printNotification(notification, verbose=False):
 			print "#"*50
 
 def postNotifications(notifications_to_post, url_to_post):
-
+	headers = {'Content-type': 'application/json'}
 	for n in notifications_to_post:
 		print "Posting to '%s'..." % url_to_post
 		printNotification(n)
-		r = requests.post(url_to_post, json.dumps(n))
+		r = requests.post(url_to_post, data=json.dumps(n), headers=headers)
 		print "Status code = %s" % r.status_code
 		print "/"*50
 
