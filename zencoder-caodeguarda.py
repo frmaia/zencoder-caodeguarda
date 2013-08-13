@@ -43,9 +43,8 @@ def processNotifications(notifications, jobs_filter, file_name_filter, url_to_po
 	# Interpret args and process API query result
 	notifications_to_post = []
 	if jobs_filter:
-
 		for n in notifications:
-			if n['job']['id'] in jobs_filter:
+			if str(n['job']['id']) in jobs_filter:
 				notifications_to_post.append(n)
 
 	elif file_name_filter:
@@ -92,6 +91,8 @@ def main(args):
 	since_str = args.since
 
 	jobs_filter = args.filterByJobs
+	if jobs_filter is not None:
+		jobs_filter = jobs_filter.split(',')
 	file_name_filter = args.filterByOutputFileName
 	url_to_post = args.postToUrl
 	list_only = args.listOnly
