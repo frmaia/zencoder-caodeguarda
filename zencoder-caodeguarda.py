@@ -28,11 +28,11 @@ def printNotification(notification, verbose=False):
 			print "%s" % json.dumps(notification)
 			print "#"*50
 
-def postNotifications(notifications_to_post, url_to_post):
+def postNotifications(notifications_to_post, url_to_post, verbose):
 	headers = {'Content-type': 'application/json'}
 	for n in notifications_to_post:
 		print "Posting to '%s'..." % url_to_post
-		printNotification(n)
+		printNotification(n, verbose)
 		r = requests.post(url_to_post, data=json.dumps(n), headers=headers)
 		print "Status code = %s" % r.status_code
 		print "/"*50
@@ -59,7 +59,7 @@ def processNotifications(notifications, jobs_filter, file_name_filter, url_to_po
 
 	#Print or resend notifications...
 	if url_to_post:
-		postNotifications(notifications_to_post, url_to_post)
+		postNotifications(notifications_to_post, url_to_post, verbose)
 	elif list_only:
 		for n in notifications_to_post:
 			printNotification(n, verbose)
