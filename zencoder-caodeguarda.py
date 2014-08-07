@@ -5,9 +5,12 @@ import dateutil.parser
 import json
 import requests
 import sys
+import time
 import urllib2
 
 from datetime import datetime, timedelta
+
+SLEEP_TIME_SECS = 10
 
 
 def getZencoderNotifications(api_key, since, page=1, per_page=50):
@@ -15,8 +18,9 @@ def getZencoderNotifications(api_key, since, page=1, per_page=50):
 	req_headers = {"Zencoder-Api-Key": api_key}
 
 	req_url = "https://app.zencoder.com/api/v2/notifications.json?since=%s&page=%s&per_page=%s" % (since,page,per_page)
-	
+	print "Requesting: %s "  % req_url
 	req = urllib2.Request(req_url, headers = req_headers)
+
 	response_str = urllib2.urlopen(req).read()
 	return json.loads(response_str)
 
@@ -92,9 +96,6 @@ def main(args):
 
 	api_key = args.api_key
 
-	since_dt = datetime.utcnow() - timedelta(minutes=args.since_minutes)
-	since = since_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-
 	jobs_filter = args.filter_jobs
 	if jobs_filter is not None:
 		jobs_filter = jobs_filter.split(',')
@@ -105,15 +106,30 @@ def main(args):
 	
 	
 	# Get API query result
+	
 	page = 1
-	r = getZencoderNotifications(api_key, since, page=page, per_page=50)
-	notifications = r['notifications']
-	while len(notifications) > 0:
-		processNotifications(notifications, jobs_filter, file_name_filter, url_to_post, list_only, verbose)
+	since_dt = datetime.utcnow() - timedelta(minutes=args.since_minutes)
+	since = since_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-		page += 1
-		r = getZencoderNotifications(api_key, since, page=page, per_page=50)
-		notifications = r['notifications']
+
+	while True: 
+		try:
+			r = getZencoderNotifications(api_key, since, page=page, per_page=50)
+			notifications = r['notifications']
+			while len(notifications) > 0:
+				processNotifications(notifications, jobs_filter, file_name_filter, url_to_post, list_only, verbose)
+
+				page += 1
+				r = getZencoderNotifications(api_key, since, page=page, per_page=50)
+				notifications = r['notifications']
+
+			time.sleep(SLEEP_TIME_SECS)
+			page = 1
+			since_dt = datetime.utcnow() - timedelta(seconds=SLEEP_TIME_SECS)
+			since = since_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+		except KeyboardInterrupt:
+			sys.exit(" --> See you later! ")
+
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
